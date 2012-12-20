@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 mouseEnabled="false" 
+		 scaleX="{scale}" 
+		 scaleY="{scale}">
+	<fx:Declarations>
+		<fx:Number id="px">0</fx:Number>
+		<fx:Number id="py">0</fx:Number>
+		<fx:Number id="pz">0</fx:Number>
+		<fx:Number id="scale">1.0</fx:Number>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import mx.core.IVisualElement;
+			import mx.flash.UIMovieClip;
+			
+			public function addBackground(element:UIMovieClip):void
+			{
+				element.mouseChildren = false;
+				element.mouseEnabled = false;
+				
+				background.addElement(element);
+			}
+			
+			public function addForeground(element:UIMovieClip):void
+			{
+				element.mouseChildren = false;
+				element.mouseEnabled = false;
+				
+				foreground.addElement(element);
+			}
+			
+			public function addEntity(element:IVisualElement):void
+			{
+				entity.addElement(element);
+			}
+			
+			public function removeEntity(element:IVisualElement):void
+			{
+				entity.removeElement(element);
+			}
+			
+			public function hasEntity(element:IVisualElement):Boolean
+			{
+				var idx:int;
+				try {
+					idx = entity.getElementIndex(element);
+				}catch (e:ArgumentError){
+					idx = -1;
+				}
+				return (idx != -1);
+			}
+			
+		]]>
+	</fx:Script>
+	<s:Group id="background" mouseEnabled="false"/>
+	<s:Group id="entity"/>
+	<s:Group id="foreground" mouseEnabled="false"/>
+</s:Group>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<s:Group xmlns:fx="http://ns.adobe.com/mxml/2009" 
+		 xmlns:s="library://ns.adobe.com/flex/spark" 
+		 xmlns:mx="library://ns.adobe.com/flex/mx" 
+		 enterFrame="onEnterFrame(event)">
+	<fx:Declarations>
+		<fx:Number id="x">0</fx:Number>
+		<fx:Number id="y">0</fx:Number>
+		<fx:Number id="zoom">1.0</fx:Number>
+		<fx:Number id="screenWidth">0</fx:Number>
+		<fx:Number id="screenHeight">0</fx:Number>
+		<fx:Number id="focalLength">300</fx:Number>
+		<fx:Number id="movementDamping">5</fx:Number>
+	</fx:Declarations>
+	<fx:Script>
+		<![CDATA[
+			import flash.utils.getTimer;
+			
+			import mx.core.IVisualElement;
+			import mx.events.FlexEvent;
+			
+			public var bounds:Rectangle;
+			
+			private var target:IVisualElement;
+			private var layers:Vector.<ParallaxLayer>;
+			
+			private var isFocus:Boolean = false;
+			private var focusLayer:ParallaxLayer;
+			
+			private var isShake:Boolean = false;
+			private var shakeStrength:Number;
+			private var shakeEndTime:int;
+
+			public function addLayer(layer:ParallaxLayer):void
+			{
+				if (layers == null) layers = new Vector.<ParallaxLayer>();
+				
+				layers.push(layer);
+			}
+			
+			public function removeLayer(layer:ParallaxLayer):void
+			{
+				var index:int = layers.indexOf(layer);
+				if (index != -1)
+					layers.splice(index, 1);
+			}
+			
+			public function focus(target:IVisualElement, zoom:Number=1.0):void
+			{
+				this.isFocus = true;
+				this.target = target;
+				this.focusLayer = findLayer(target);
+			}
+			
+			public function blur():void
+			{
+				if (this.isFocus == false) return;
+			}
+			
+			public function zoomIn():void
+			{
+			}
+			
+			public function zoomOut():void
+			{
+			}
+			
+			public function shake(strength:Number, duration:Number=1.0):void
+			{
+				shakeStrength = strength;
+				shakeEndTime = getTimer() + duration * 1000;
+				isShake = true;
+			}
+			
+			protected function onEnterFrame(event:Event):void
+			{
+				update();
+			}
+			
+			private function findLayer(target:IVisualElement):ParallaxLayer
+			{
+				var n:int = layers.length;
+				while (--n > -1)
+				{
+					var layer:ParallaxLayer = layers[n];
+					if (layer.hasEntity(target))
+						return layer;
+				}
+				return null;
+			}
+			
+			private function update():void
+			{
+				// follow
+				if (target != null)
+				{
+					var offsetX:Number = -(target.x + target.width/2) * zoom + screenWidth / 2;
+					var offsetY:Number = -(target.y + target.height/2) * zoom + screenHeight / 2;
+					if (movementDamping == 0)
+					{
+						x = offsetX;
+						y = offsetY;
+					}
+					else
+					{
+						x += (-x + offsetX) / movementDamping;
+						y += (-y + offsetY) / movementDamping;
+					}
+				}
+				
+				// shake
+				var shakeX:Number = 0;
+				var shakeY:Number = 0;
+				if (isShake)
+				{
+					var t:int = getTimer();
+					if (t > shakeEndTime)
+					{
+						isShake = false;
+					}
+					else
+					{
+						shakeX = Math.random()*(-shakeStrength-shakeStrength)+shakeStrength;
+						shakeY = Math.random()*(-shakeStrength-shakeStrength)+shakeStrength;
+					}
+				}
+				
+				// bounds
+				if (bounds != null)
+				{
+					if (x - shakeX >= bounds.x)
+						x = bounds.x;
+					else if (x + shakeX <= screenWidth - bounds.width * zoom)
+						x = screenWidth - bounds.width * zoom;
+					if (y + shakeY >= bounds.y)
+						y = bounds.y;
+					else if (y - shakeY <= screenHeight - bounds.height * zoom)
+						y = screenHeight - bounds.height * zoom;
+				}
+				
+				// update
+				var n:int = layers.length;
+				while (--n > -1)
+				{
+					var layer:ParallaxLayer = layers[n];
+					
+					var distance:Number = focalLength / (focalLength + layer.pz);
+					if (layer == focusLayer)
+						distance = 1;
+					
+					layer.x = (layer.px + x + shakeX) * distance;
+					layer.y = (layer.py + y + shakeY) * distance;
+					layer.scale = zoom;
+				}
+			}
+		]]>
+	</fx:Script>
+</s:Group>
